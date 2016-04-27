@@ -29,8 +29,8 @@ void handle_client_connection(int client_socket_fd,
     int bytes_read;
     
     memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_UNSPEC; //ipv4 or ipv6 will do
+    hints.ai_socktype = SOCK_STREAM; 
     
     getaddrinfo_error = getaddrinfo(backend_host, backend_port_str, &hints, &addrs);
     if (getaddrinfo_error != 0) {
@@ -38,6 +38,7 @@ void handle_client_connection(int client_socket_fd,
         exit(1);
     }
     
+//iterate through sockets trying to find one we can actually connect to
     for (addrs_iter = addrs;
          addrs_iter != NULL;
          addrs_iter = addrs_iter->ai_next)
@@ -121,6 +122,8 @@ int main(int argc, char *argv[]){
             continue;
         }
         
+
+//allow reusing
         so_reuseaddr = 1;
         setsockopt(server_socket_fd, SOL_SOCKET, SO_REUSEADDR, &so_reuseaddr, sizeof(so_reuseaddr));
         
