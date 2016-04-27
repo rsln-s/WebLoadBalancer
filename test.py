@@ -4,7 +4,7 @@ import requests
 import pexpect
 from threading import Thread
 
-RSP_BINARY = '/Users/ruslan/dev/networks_task/main'
+RSP_BINARY = '/Users/ruslan/dev/networks_task/WebLoadBalancer/main'
 
 class MockServerRequestHandler(BaseHTTPRequestHandler):
 
