@@ -78,9 +78,6 @@ void handle_client_connection(int client_socket_fd,
 
 
 int main(int argc, char *argv[]){
-    char *server_port_str;
-    char *backend_addr;
-    char *backend_port_str;
     
     struct addrinfo hints;
     struct addrinfo *addrs;
@@ -99,9 +96,9 @@ int main(int argc, char *argv[]){
                 argv[0]);
         exit(1);
     }
-    server_port_str = argv[1];
-    backend_addr = argv[2];
-    backend_port_str = argv[3];
+    char* server_port_str = argv[1];
+    char* backend_addr = argv[2];
+    char* backend_port_str = argv[3];
     
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;
