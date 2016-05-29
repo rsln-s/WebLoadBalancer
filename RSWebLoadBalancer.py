@@ -3,6 +3,7 @@ __author__ = 'ruslan'
 
 import logging
 import os.path
+import random
 import socket
 import sys
 from thread import *
@@ -22,7 +23,7 @@ def parse_headers(request):
 
 class RSWebLoadBalancer:
 
-    def __init__(self, debug = True, incoming_port=8000):
+    def __init__(self, debug=True, incoming_port=8000):
         self.backend = [8888, 8889]
         self.currentSessions = []
         self.incomingPort = incoming_port
@@ -35,7 +36,7 @@ class RSWebLoadBalancer:
     def redirectRequest(self, connection, data, address, session_port):
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if int(session_port) == -1:
-            backend_port_to_connect = self.backend[0]
+            backend_port_to_connect = random.choice(self.backend)
         elif int(session_port) not in self.backend:
             print(session_port, " not found in the list of backend servers: ", self.backend)
             send_socket.close()
@@ -92,10 +93,10 @@ class RSWebLoadBalancer:
                     cookies = {e.split('=')[0]: e.split('=')[1] for e in headers['cookie'].split(';')}
                     if self.debug:
                         print'Found a cookie'
-                if 'SessionID' in cookies:
-                    if self.debug:
-                        print ("Found SessionID = ", cookies['SessionID'])
-                    session_port = cookies['SessionID']
+                    if 'SessionID' in cookies:
+                        if self.debug:
+                            print ("Found SessionID = ", cookies['SessionID'])
+                        session_port = cookies['SessionID']
                 start_new_thread(self.redirectRequest, (connection, data, address, session_port))
             except KeyboardInterrupt:
                 print("quitting WebLoadBalancer")
