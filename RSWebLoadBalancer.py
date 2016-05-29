@@ -34,9 +34,7 @@ class RSWebLoadBalancer:
         #check that all of the backend is up
         for port in self.backend:
             try:
-                response = requests.get("http://127.0.0.1:" + str(port))
-                if not response:
-                    print("Server at port ", port, " is down")
+                requests.get("http://127.0.0.1:" + str(port))
             except requests.exceptions.RequestException as e:
                 if self.debug:
                     print e
@@ -59,13 +57,7 @@ class RSWebLoadBalancer:
         if self.debug:
             print("Trying to redirect")
         try:
-            response = requests.get("http://127.0.0.1:" + str(backend_port_to_connect))
-            if not response:
-                print("Server at port ", backend_port_to_connect, " is down")
-                send_socket.close()
-                connection.send('Server you are looking for is down')
-                connection.close()
-                return
+            requests.get("http://127.0.0.1:" + str(backend_port_to_connect))
         except requests.exceptions.RequestException as e:
             if self.debug:
                 print e
