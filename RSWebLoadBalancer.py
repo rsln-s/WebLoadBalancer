@@ -19,24 +19,34 @@ def parse_headers(request):
         headers[header_line[0].lower()] = header_line[2].strip()
     return headers
 
+
 class RSWebLoadBalancer:
 
-    def __init__(self, incoming_port=8000):
-        self.backend = 8888
+    def __init__(self, debug = True, incoming_port=8000):
+        self.backend = [8888, 8889]
         self.currentSessions = []
         self.incomingPort = incoming_port
-        self.bufferLength = 8192
-        self.debug = True
+        self.bufferLength = 4092
+        self.debug = debug
 
     def shutDown(self):
         sys.exit(0)
 
-    def redirectRequest(self, connection, data, address):
+    def redirectRequest(self, connection, data, address, session_port):
+        send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if int(session_port) == -1:
+            backend_port_to_connect = self.backend[0]
+        elif int(session_port) not in self.backend:
+            print(session_port, " not found in the list of backend servers: ", self.backend)
+            send_socket.close()
+            connection.close()
+            self.shutDown()
+        else:
+            backend_port_to_connect = int(session_port)
         if self.debug:
             print("Trying to redirect")
         try:
-            send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            send_socket.connect(('127.0.0.1', self.backend))
+            send_socket.connect(('127.0.0.1', backend_port_to_connect))
             send_socket.send(data)
             if self.debug:
                 print("sent data:", data)
@@ -73,14 +83,20 @@ class RSWebLoadBalancer:
                 connection, address = listen_socket.accept()
                 data = connection.recv(self.bufferLength)
                 headers = parse_headers(data)
+                session_port = -1
                 if len(data) == 0:
                     continue
                 if self.debug:
                     print("Received data: ", data)
                 if 'cookie' in headers:
                     cookies = {e.split('=')[0]: e.split('=')[1] for e in headers['cookie'].split(';')}
-                    print'Found a cookie'
-                start_new_thread(self.redirectRequest, (connection, data, address))
+                    if self.debug:
+                        print'Found a cookie'
+                if 'SessionID' in cookies:
+                    if self.debug:
+                        print ("Found SessionID = ", cookies['SessionID'])
+                    session_port = cookies['SessionID']
+                start_new_thread(self.redirectRequest, (connection, data, address, session_port))
             except KeyboardInterrupt:
                 print("quitting WebLoadBalancer")
                 listen_socket.close()
