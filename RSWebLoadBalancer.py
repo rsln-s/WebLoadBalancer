@@ -2,6 +2,7 @@ __author__ = 'ruslan'
 
 
 import logging
+import requests
 import os.path
 import random
 import socket
@@ -24,11 +25,22 @@ def parse_headers(request):
 class RSWebLoadBalancer:
 
     def __init__(self, debug=True, incoming_port=8000):
-        self.backend = [8888, 8889]
+        self.backend = [8888, 8889, 8890]
         self.currentSessions = []
         self.incomingPort = incoming_port
         self.bufferLength = 4092
         self.debug = debug
+
+        #check that all of the backend is up
+        for port in self.backend:
+            try:
+                response = requests.get("http://127.0.0.1:" + str(port))
+                if not response:
+                    print("Server at port ", port, " is down")
+            except requests.exceptions.RequestException as e:
+                if self.debug:
+                    print e
+                print("Server at port ", port, " is down")
 
     def shutDown(self):
         sys.exit(0)
@@ -41,11 +53,28 @@ class RSWebLoadBalancer:
             print(session_port, " not found in the list of backend servers: ", self.backend)
             send_socket.close()
             connection.close()
-            self.shutDown()
+            return
         else:
             backend_port_to_connect = int(session_port)
         if self.debug:
             print("Trying to redirect")
+        try:
+            response = requests.get("http://127.0.0.1:" + str(backend_port_to_connect))
+            if not response:
+                print("Server at port ", backend_port_to_connect, " is down")
+                send_socket.close()
+                connection.send('Server you are looking for is down')
+                connection.close()
+                return
+        except requests.exceptions.RequestException as e:
+            if self.debug:
+                print e
+            print("Server at port ", backend_port_to_connect, " is down")
+            send_socket.close()
+            connection.send('Server you are looking for is down')
+            connection.close()
+            return
+
         try:
             send_socket.connect(('127.0.0.1', backend_port_to_connect))
             send_socket.send(data)

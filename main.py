@@ -7,7 +7,6 @@ from threading import Thread
 class MockServerRequestHandler1(BaseHTTPRequestHandler):
 
     def do_GET(self):
-        print("Mock server received smth")
         self.send_response(200)
         self.end_headers()
         self.wfile.write("Hello from the first mock server\n")
@@ -16,7 +15,6 @@ class MockServerRequestHandler1(BaseHTTPRequestHandler):
 class MockServerRequestHandler2(BaseHTTPRequestHandler):
 
     def do_GET(self):
-        print("Mock server received smth")
         self.send_response(200)
         self.end_headers()
         self.wfile.write("Hello from the second mock server\n")
