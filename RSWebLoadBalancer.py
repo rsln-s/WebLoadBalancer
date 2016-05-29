@@ -43,19 +43,25 @@ class RSWebLoadBalancer:
     def shutDown(self):
         sys.exit(0)
 
-    def redirectRequest(self, connection, data, address, session_port):
+    def redirectRequest(self, connection, data, session_port):
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        #check that session port in cookie exists
         if int(session_port) == -1:
             backend_port_to_connect = random.choice(self.backend)
         elif int(session_port) not in self.backend:
             print(session_port, " not found in the list of backend servers: ", self.backend)
             send_socket.close()
+            connection.send('Server you are looking for does not exist')
             connection.close()
             return
         else:
             backend_port_to_connect = int(session_port)
+
         if self.debug:
             print("Trying to redirect")
+
+        #check if backend server is alive
         try:
             requests.get("http://127.0.0.1:" + str(backend_port_to_connect))
         except requests.exceptions.RequestException as e:
@@ -118,7 +124,7 @@ class RSWebLoadBalancer:
                         if self.debug:
                             print ("Found SessionID = ", cookies['SessionID'])
                         session_port = cookies['SessionID']
-                start_new_thread(self.redirectRequest, (connection, data, address, session_port))
+                start_new_thread(self.redirectRequest, (connection, data, session_port))
             except KeyboardInterrupt:
                 print("quitting WebLoadBalancer")
                 listen_socket.close()
