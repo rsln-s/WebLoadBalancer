@@ -25,7 +25,7 @@ def parse_headers(request):
 class RSWebLoadBalancer:
 
     def __init__(self, debug=True, incoming_port=8000):
-        self.backend = [8888, 8889, 8890]
+        self.backend = [8888, 8889]
         self.currentSessions = []
         self.incomingPort = incoming_port
         self.bufferLength = 4092
@@ -48,7 +48,22 @@ class RSWebLoadBalancer:
 
         #check that session port in cookie exists
         if int(session_port) == -1:
-            backend_port_to_connect = random.choice(self.backend)
+            backend_port_to_connect = self.backend[0]
+            load = 21
+            #find the one with the least load
+            for port in self.backend:
+                try:
+                    reply = requests.get("http://127.0.0.1:" + str(port))
+                    if load > int(reply.headers["Load"]):
+                        load = int(reply.headers["Load"])
+                        backend_port_to_connect = port
+                        if self.debug:
+                            print("Updated load: ", load, " New backend: ", backend_port_to_connect)
+                except requests.exceptions.RequestException as e:
+                    if self.debug:
+                        print e
+                    print("Server at port ", port, " is down")
+
         elif int(session_port) not in self.backend:
             print(session_port, " not found in the list of backend servers: ", self.backend)
             send_socket.close()

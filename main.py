@@ -3,11 +3,15 @@ __author__ = 'ruslan'
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from RSWebLoadBalancer import *
 from threading import Thread
+import random
+
 
 class MockServerRequestHandler1(BaseHTTPRequestHandler):
 
     def do_GET(self):
+        load = random.randrange(1, 20)
         self.send_response(200)
+        self.send_header("Load", str(load))
         self.end_headers()
         self.wfile.write("Hello from the first mock server\n")
 
@@ -15,7 +19,9 @@ class MockServerRequestHandler1(BaseHTTPRequestHandler):
 class MockServerRequestHandler2(BaseHTTPRequestHandler):
 
     def do_GET(self):
+        load = random.randrange(1, 20)
         self.send_response(200)
+        self.send_header("Load", str(load))
         self.end_headers()
         self.wfile.write("Hello from the second mock server\n")
 
